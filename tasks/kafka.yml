@@ -1,0 +1,80 @@
+
+# Kafka Task 
+
+# - name: --- Upload kafka_2.11-0.11.0.1.tgz to Server kafka --- 
+#   copy: 
+#     src: kafka_2.11-0.11.0.1.tgz
+#     dest: /opt/
+  
+- name: --- download kafka --- 
+  shell: |
+    cd /opt
+    wget {{general_config.url_repo}}/{{general_config.kafka_version.name}}_{{general_config.kafka_version.version}}.{{general_config.kafka_version.extension}}
+    
+
+- name: --- install Kafka Steps---
+  shell: |
+   cd /opt
+   tar xzf {{general_config.kafka_version.name}}_{{general_config.kafka_version.version}}.{{general_config.kafka_version.extension}}
+   useradd kafka
+   chown -R kafka:kafka /opt/{{general_config.kafka_version.name}}_{{general_config.kafka_version.version}}
+   ln -s /opt/{{general_config.kafka_version.name}}_{{general_config.kafka_version.version}}/ /opt/kafka
+   chown -R kafka:kafka /opt/kafka
+   mkdir -p /var/log/kafka
+   chown -R kafka:kafka /var/log/kafka
+
+- name: --- Mkdir kafka-log ---
+  shell: |
+    cd /
+    mkdir kafka-logs
+    touch .lock
+    chown -R kafka:kafka /kafka-logs
+
+- name: --- set server propertis ---
+  template: src=server.properties.j2 dest=/opt/kafka/config/server.properties
+
+- name: --- Create systemd for kafka ---
+  template: src=systemd-kafka.j2 dest=/etc/systemd/system/kafka.service
+
+- name: --- set kafka-server-start.sh with new Xmx and Xms value ----
+  template: src={{item.src}} dest={{item.dest}}
+  with_items:
+     - { src: 'templates/kafka-server-start.sh.j2', dest: '/opt/kafka/bin/kafka-server-start.sh' }
+
+
+- name: --- open Firewalls ---
+  shell: |
+   firewall-cmd --permanent --add-port=9092/tcp
+   firewall-cmd --permanent --add-port=9999/tcp
+   firewall-cmd --reload
+  ignore_errors: true
+  
+- name: --- start service kafka ---
+  shell: |
+   systemctl deamon-reload
+   systemctl start kafka.service
+
+- name: --- Config Logrotate for Kafka ---
+  template: src=kafka-logrotat-conf.j2 dest=/etc/logrotate.d/kafka
+
+  
+
+- name: -- Create script Kafka Topic ---
+  template: src=script-create-topics.j2 dest=/opt/script-create-topics.sh
+
+- name: -- Create script Kafka Topic ---  
+  shell: |
+    chmod +x /opt/script-create-topics.sh 
+    chmod +x /opt/kafka/bin/kafka-server-start.sh
+    /opt/script-create-topics.sh {{item.value.replication}} {{item.value.partitions}} {{item.value.name}}
+  with_dict: "{{ topics }}"
+  run_once: true 
+  when: "{{ general_config_kafa.create_topic }}"
+
+#/opt/kafka/bin/kafka-topics.sh --create --zookeeper "{{zookeeper_nodes.node1.internal_ip}}:2181/kafka --replication-factor {{item.value.replication}} --partitions {{item.value.partitions}} --topic {{item.value.name}}"        
+# - name: --- topic ---
+#   copy:
+#     dest: "/root/topic.txt"
+#     content: |
+#        ./kafka-topics.sh --create --zookeeper "{{ zookeeper_nodes.node1.internal_ip }}:2181/kafka --replication-factor {{item.value.replication}} --partitions {{item.value.partitions}} --topic  {{item.value.name}}"  
+#   with_dict: "{{ topics }}"

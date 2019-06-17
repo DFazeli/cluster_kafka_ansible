@@ -1,0 +1,11 @@
+---
+- name: --- install Java ----
+  yum:
+    name: java
+    state: present
+
+- name: --- Set Java Home ----
+  shell: |
+   #echo 'export JAVA_HOME=/usr/java/jdk1.8.0_161' | tee -a /etc/profile
+   echo 'export JAVA_HOME=/usr/bin/java' | tee -a /etc/profile
+   source /etc/profile

@@ -1,0 +1,70 @@
+---
+
+# - name: --- Upload  zookeeper-3.4.12.tar.gz to kafka server ---
+#   copy: 
+#     src: zookeeper-3.4.12.tar.gz
+#     dest: /opt/  
+
+- name: --- get zookeeper from repository local --- 
+  shell: |
+    cd /opt
+    wget {{general_config.url_repo}}/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}
+   
+
+- name: --- preinstallation zookeeper ---
+  shell: |
+   cd /opt
+   tar xzf {{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}
+   useradd zookeeper
+   chown -R zookeeper /opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}
+   ln -s /opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}} /opt/zookeeper
+   chown -h zookeeper:zookeeper /opt/zookeeper
+   mkdir /var/lib/zookeeper
+   chown zookeeper:zookeeper /var/lib/zookeeper
+   mkdir /var/log/zookeeper
+   chown zookeeper:zookeeper /var/log/zookeeper
+   cd /opt/zookeeper/conf
+   
+
+- name: --- set zkEnv.sh ---   
+  template: src=zkenv.sh.j2 dest=/opt/zookeeper/bin/zkEnv.sh
+   
+- name: --- create Systemd for zookeeper ----
+  template: src=Systemd-zookeeper.j2 dest=/etc/systemd/system/zookeeper.service
+
+- name: --- config Crontab ----
+  cron:
+     name: "run zkcli"
+     minute: "0"
+     hour: "00"
+     job: "/opt/zookeeper/bin/zkCli.sh /var/lib/zookeeper -n 3"
+  ignore_errors: true
+
+- name: --- Setup zoo.cfg ----
+  template: src=zookeeper-zoo.j2 dest=/opt/zookeeper/conf/zoo.cfg
+
+- name: --- Setup myid ----
+  template: src=zookeeper-myid.j2 dest=/var/lib/zookeeper/myid
+
+- name: --- Config Logrotate for zookeeper ---
+  template: src=kafka-logrotat-conf.j2 dest=/etc/logrotate.d/zookeeper
+  
+- name: --- open Firewalls ---
+  shell: |
+   firewall-cmd --permanent --add-port=2181/tcp
+   firewall-cmd --permanent --add-port=9001/tcp
+   firewall-cmd --reload
+  ignore_errors: true
+
+- name: --- chown config file ----
+  shell: |
+      chown -R zookeeper:zookeeper /opt/zookeeper/conf/
+      chown -R zookeeper:zookeeper /var/lib/zookeeper/myid
+      chown -R zookeeper:zookeeper /opt/zookeeper/bin/
+      chmod +x /opt/zookeeper/bin/zkEnv.sh
+      sysctl -p
+      
+- name: --- start service zookeeper ---
+  shell: |
+   systemd deamon-reload
+   systemctl start zookeeper.service

@@ -1,0 +1,14 @@
+/var/log/zookeeper {
+    daily
+    rotate 2
+    dateext
+    dateformat _%Y-%m-%d-%s
+    compress
+    nodelaycompress
+    nocopy
+    nocopytruncate
+    nocreate
+    missingok
+    notifempty
+}
+

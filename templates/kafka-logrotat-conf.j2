@@ -1,0 +1,28 @@
+/var/log/kafka/*.log
+{
+    daily
+    rotate 2
+    dateext
+    dateformat _%Y-%m-%d-%s
+    compress
+    nodelaycompress
+    nocopy
+    nocopytruncate
+    nocreate
+    missingok
+    notifempty
+}
+
+/var/log/kafka/*.log*[0-9][0-9]
+{
+    daily
+    rotate 0
+    nodateext
+    compress
+    nodelaycompress
+    nocopy
+    nocopytruncate
+    nocreate
+    missingok
+    notifempty
+}

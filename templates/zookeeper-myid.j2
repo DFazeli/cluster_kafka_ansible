@@ -1,0 +1,1 @@
+{% for host in zookeeper_nodes %}{% if ansible_env.SSH_CONNECTION.split(' ')[2] == zookeeper_nodes[host].ssh_ip %}{{ zookeeper_nodes[host].myid }}{% endif %}{% endfor %}

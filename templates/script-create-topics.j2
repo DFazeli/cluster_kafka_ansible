@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/opt/kafka/bin/kafka-topics.sh --create --zookeeper {{zookeeper_nodes.node1.internal_ip}}:2181/kafka --replication-factor $1 --partitions $2 --topic $3
