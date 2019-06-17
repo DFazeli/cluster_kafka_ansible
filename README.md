@@ -1,2 +1,2 @@
 # kafka_ansible
-install kafka and zookeeper by ansibel
+install kafka and zookeeper by ansible
