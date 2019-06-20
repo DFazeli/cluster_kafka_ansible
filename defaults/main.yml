@@ -63,143 +63,20 @@ zookeeper_nodes:
 #----------------- Other config parameters --------------------------------------
 topics:
   topic1: 
-    name: action_in_bind_imsimsisdn_queue
+    name: topic1
     replication: 2
     partitions: 12
   topic2: 
-     name: action_in_unbind_imsimsisdn_queue
+     name: topic2
      replication: 2 
      partitions: 12
   topic3: 
-     name: action_in_changeownership_queue
+     name: topic3
      replication: 2 
      partitions: 12
   topic4: 
-     name: action_in_whitepair_queue
+     name: topic4
      replication: 2 
      partitions: 12
-  topic5: 
-     name: action_in_blackpair_queue
-     replication: 2 
-     partitions: 12
-  topic6: 
-     name: action_in_simswap_queue
-     replication: 2 
-     partitions: 12
-  topic7: 
-     name: action_in_terminate_sim_queue
-     replication: 2 
-     partitions: 12
-  topic8: 
-     name: action_in_portin_queue
-     replication: 2 
-     partitions: 12
-  topic9: 
-     name: action_in_portout_queue
-     replication: 2 
-     partitions: 12
-  topic10: 
-     name: action_in_terminate_all_queue
-     replication: 2 
-     partitions: 12
-  topic11: 
-     name: new_gray   
-     replication: 2 
-     partitions: 12
-  topic12: 
-     name: eir_log
-     replication: 2 
-     partitions: 12
-  topic13: 
-     name: unknow_actionType
-     replication: 2 
-     partitions: 12
-  topic14: 
-     name: permanent_white 
-     replication: 2 
-     partitions: 12
-  topic15: 
-     name: permanent_black
-     replication: 2 
-     partitions: 12
-  topic16: 
-     name: remove_permanent
-     replication: 2 
-     partitions: 12
-  topic17: 
-       name: incomplete_gray
-       replication: 2 
-       partitions: 12
-  topic18: 
-      name: action_in_removepair_queue
-      replication: 2 
-      partitions: 12
-  topic19: 
-      name: kafkahealthcheck
-      replication: 2 
-      partitions: 12
-  topic20: 
-      name: hamta_callback
-      replication: 2 
-      partitions: 12
-  topic21: 
-      name: hamta_callback-failedQueue
-      replication: 2 
-      partitions: 12
-  topic22: 
-      name: hamta_callback-watchdogQueue 
-      replication: 2 
-      partitions: 12
-  topic23: 
-      name: hamta_notify
-      replication: 2 
-      partitions: 12
-  topic24: 
-      name: hamta_notify-failedQueue
-      replication: 2 
-      partitions: 12
-  topic25: 
-      name: hamta_notify-watchdogQueue   
-      replication: 2 
-      partitions: 12
-  topic26: 
-     name: proxy.actionin.search
-     replication: 2 
-     partitions: 12 
-  topic27:    
-     name: proxy.blackinquiry
-     replication: 2 
-     partitions: 12
-  topic29:  
-    name: proxy.inquiry.eir
-    replication: 2 
-    partitions: 12  
-  topic30:    
-    name: proxy.inquiry.policy
-    replication: 2 
-    partitions: 12
-  topic31:
-    name: proxy.inquiry.sim
-    replication: 2 
-    partitions: 12  
-  topic32:  
-    name: proxy.policy.search
-    replication: 2 
-    partitions: 12    
-  topic33:
-    name: proxy.rise.answer
-    replication: 2 
-    partitions: 12  
-  topic34:
-    name: proxy.sync
-    replication: 2 
-    partitions: 12
-  topic35:
-    name: remove_bundle
-    replication: 2 
-    partitions: 12
-  topic37:
-    name: setting.modification.t
-    replication: 2 
-    partitions: 12
+  
                
