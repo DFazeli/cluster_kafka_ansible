@@ -1,0 +1,21 @@
+[Unit]
+Description=Apache Kafka server (broker)
+Documentation=http://kafka.apache.org/documentation.html
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target zookeeper.service
+
+[Service]
+Type=simple
+User=kafka
+Group=kafka
+LimitNOFILE=512000
+LimitNPROC=512000
+Environment="KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka1 -Dcom.sun.management.jmxremote.port=9999 -Dcom.sun.management.jmxremote.rmi.port=9999 -Djava.net.preferIP4Stack=true"
+Environment="LOG_DIR=/var/log/kafka"
+#Environment="KAFKA_OPTS=-javaagent:/opt/jolokia-jvm-1.6.2-agent.jar=host=*"
+
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target

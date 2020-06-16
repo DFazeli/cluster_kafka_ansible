@@ -1,0 +1,100 @@
+---
+
+general_config: 
+  cluster_status: true
+  domain_repository: repository.pdc.kpp.local
+  ip_repository: 172.26.89.21
+  java_installation: false
+  ntp_installation: false
+  createrepo: false
+  
+  
+general_config_kafka:
+    kafka_version:
+         name: kafka
+         version: 2.12-2.5.0
+         extension: tgz
+    Xmx: 2
+    Xms: 2
+    create_topic: false
+    kafka_data_dest: /kafka/kafka-data
+
+general_config_zookeeper:
+    zookeeper_version:
+       name: zookeeper
+       version: 3.5.6-bin
+       extension: tar.gz
+
+#  --------------- Repo Config ----------------
+repository:
+  repo1:
+     id: 1
+     title_repo: ansible_repo
+     name: ansible_repo
+     baseurl: "http://{{ general_config.domain_repository }}/"
+     gpgcheck: 0
+     enable: 1     
+#  --------------- kafka nodes ----------------
+kafka_nodes:
+  node1:
+    hostname: zk-kafka
+    ssh_ip: 192.168.0.146
+    internal_ip: 192.168.0.146
+    port: 9092
+    broker_id: 1
+    
+  node2:
+    hostname: zk-kafka
+    ssh_ip: 192.168.0.147
+    internal_ip: 192.168.0.147
+    port: 9092
+    broker_id: 2
+    
+  node3:
+    hostname: zk-kafka
+    ssh_ip: 192.168.0.148
+    internal_ip: 192.168.0.148
+    port: 9092
+    broker_id: 3
+    
+
+# ---------------- ZooKeeper nodes  ---------------------------------
+zookeeper_nodes: 
+  node1: 
+    ssh_ip: 192.168.0.146
+    internal_ip: 192.168.0.146
+    myid: 1
+    port: 2181
+
+  node2: 
+    ssh_ip: 192.168.0.147
+    internal_ip: 192.168.0.147
+    myid: 2
+    port: 2181
+
+  node3: 
+    ssh_ip: 192.168.0.148
+    internal_ip: 192.168.0.148
+    myid: 3
+    port: 2181
+    
+#----------------- Other config parameters --------------------------------------
+topics:
+  topic1: 
+    name: topic1
+    replication: 2
+    partitions: 12
+  topic2: 
+     name: topic2
+     replication: 2 
+     partitions: 12
+  topic3: 
+     name: topic3
+     replication: 2 
+     partitions: 12
+  topic4: 
+     name: topic4
+     replication: 2 
+     partitions: 12
+  
+               

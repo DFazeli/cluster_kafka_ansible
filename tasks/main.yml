@@ -1,0 +1,74 @@
+---
+# tasks file for roles/general-config
+- block:
+  - name: --- Set /etc/hosts ---
+    lineinfile:
+      dest: /etc/hosts
+      state: present
+      line: "{{ item.value.internal_ip }} {{ item.value.hostname }}{{ item.value.broker_id }}"
+    with_dict: "{{ kafka_nodes }}"
+
+
+  - name: ---  Set Hostname --- 
+    shell: |
+       hostnamectl set-hostname {{ item }}
+    with_items: 
+       - "{% for host in kafka_nodes %}{% if ansible_env.SSH_CONNECTION.split(' ')[2] == kafka_nodes[host].ssh_ip %}{{ kafka_nodes[host].hostname }}{{ kafka_nodes[host].broker_id }}{% endif %}{% endfor %}"
+  
+  - name: --- Setup OS Parameters (sysctl.conf)----
+    blockinfile:
+      path: /etc/sysctl.conf
+      marker: "#-----------------"
+      insertafter: '### AFTER THIS LINE'
+      state: present
+      block: |
+         fs.file-max=512000
+
+  - name: --- Setup OS Parameters (limits.conf)----
+    blockinfile:
+       path: /etc/security/limits.conf
+       marker: "#-----------------"
+       insertafter: '### AFTER THIS LINE'
+       state: present
+       block: |
+         *          -       nofile          65535
+  - name: --- mv old repo ---
+    shell: |
+       mkdir -p  /etc/yum.repos.d/old_repo
+       cd /etc/yum.repos.d/
+       mv `ls -p | grep -v \/` old_repo/
+    when: "{{ general_config.createrepo }}"
+    ignore_errors: true      
+   
+  - name: --- config repository ---
+    copy:
+      dest: "/etc/yum.repos.d/backend.repo"
+      content: |
+        [backend_repo]
+        name= backend_repo
+        baseurl= {{ general_config.url_repo }}
+        gpgcheck=0
+        enabled=1 
+    when: "{{ general_config.createrepo }}"
+    
+  - name: --- install pakege ---
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+        - wget 
+
+  - include_tasks: java.yml
+    when: "{{ general_config.java_installation }}"
+
+  - include_tasks: zookeeper.yml
+    #when: ansible_env.SSH_CONNECTION.split(' ')[2] == kafka_node.ssh_ip
+
+  - include_tasks: kafka.yml
+    #when: ansible_env.SSH_CONNECTION.split(' ')[2] == kafka_node.ssh_ip
+
+  become: yes
+
+
+
+
