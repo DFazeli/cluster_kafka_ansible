@@ -1,0 +1,189 @@
+---
+
+- name: -- Remove swapfile from /etc/fstab --
+  mount:
+    name: swap
+    fstype: swap
+    state: absent
+
+- name: Download Zookeeper packages      
+  get_url:
+    url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}"
+    dest: /opt/
+
+
+- name: --- extract archive zookeeper ---
+  unarchive:
+    src: "/opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}"
+    dest: "/opt/"
+    remote_src: yes 
+
+- name: Create group zookeeper
+  group:
+    name: zookeeper
+    state: present
+
+- name: --- Add user zookeeper ---
+  user:
+    name: zookeeper
+    comment: "zookeeper user"
+    shell: /sbin/nologin
+    system: yes
+    group: zookeeper
+    createhome: no
+
+
+- name: Change zookeeper directory
+  file:
+    path: "/opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}"
+    owner: zookeeper
+    group: zookeeper
+    recurse: yes
+
+ 
+- name: Create symbolic link [zookeeper] 
+  file:
+    src: "/opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}"
+    dest: "/opt/zookeeper"
+    state: link
+
+- name: Change zookeeper link
+  file:
+    path: /opt/zookeeper
+    owner: zookeeper
+    group: zookeeper
+    
+  
+- name: craete zookeeper /var/lib directory
+  file:
+    path: /var/lib/zookeeper
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+    recurse: yes
+
+- name: craete zookeeper logs directory
+  file:
+    path: /var/log/zookeeper
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+    recurse: yes
+
+- name: --- set zkEnv.sh ---   
+  template: 
+    src: zkenv.sh.j2 
+    dest: /opt/zookeeper/bin/zkEnv.sh
+   
+- name: --- create Systemd for zookeeper ----
+  template: 
+    src: Systemd-zookeeper.j2
+    dest: /etc/systemd/system/zookeeper.service
+
+- name: --- config Crontab ----
+  cron:
+     name: "run zkcli"
+     minute: "0"
+     hour: "00"
+     job: "/opt/zookeeper/bin/zkCli.sh /var/lib/zookeeper -n 3"
+  ignore_errors: true
+
+- name: --- Setup zoo.cfg ----
+  template:
+   src: zookeeper-zoo.j2
+   dest: /opt/zookeeper/conf/zoo.cfg
+
+- name: --- Setup myid ----
+  template: 
+    src: zookeeper-myid.j2 
+    dest: /var/lib/zookeeper/myid
+
+- name: --- Config Logrotate for zookeeper ---
+  template: 
+    src: kafka-logrotat-conf.j2 
+    dest: /etc/logrotate.d/zookeeper
+
+- name: chanage owner zookeeper file to zookeeper file 
+  file:
+    path: /var/log/zookeeper
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+    recurse: yes
+
+- name: chanage owner zookeeper file to zookeeper file 
+  file:
+    path: /var/lib/zookeeper
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+    recurse: yes
+
+- name: chanage owner zookeeper file to zookeeper file 
+  file:
+    path: /opt/zookeeper
+    state: directory
+    owner: zookeeper
+    group: zookeeper
+    recurse: yes
+
+- name: --- daemon_reload ---- 
+  systemd:
+    name: zookeeper
+    daemon_reload: yes
+    enabled: yes
+
+- name: --- restart zookeeper ---  
+  service:
+    name: zookeeper
+    state: restarted
+  
+
+
+
+  
+
+
+
+
+#************************************************************************************
+# - name: --- preinstallation zookeeper ---
+#   shell: |
+#    cd /opt
+#    tar xzf {{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}
+#    useradd zookeeper
+#    chown -R zookeeper /opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}
+#    ln -s /opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}} /opt/zookeeper
+#    chown -h zookeeper:zookeeper /opt/zookeeper
+#    mkdir /var/lib/zookeeper
+#    chown zookeeper:zookeeper /var/lib/zookeeper
+#    mkdir /var/log/zookeeper
+#    chown zookeeper:zookeeper /var/log/zookeeper
+#    cd /opt/zookeeper/conf
+   
+
+# - name: --- set zkEnv.sh ---   
+#   template: src=zkenv.sh.j2 dest=/opt/zookeeper/bin/zkEnv.sh
+   
+# - name: --- create Systemd for zookeeper ----
+#   template: src=Systemd-zookeeper.j2 dest=/etc/systemd/system/zookeeper.service
+
+# - name: --- config Crontab ----
+#   cron:
+#      name: "run zkcli"
+#      minute: "0"
+#      hour: "00"
+#      job: "/opt/zookeeper/bin/zkCli.sh /var/lib/zookeeper -n 3"
+#   ignore_errors: true
+
+# - name: --- Setup zoo.cfg ----
+#   template: src=zookeeper-zoo.j2 dest=/opt/zookeeper/conf/zoo.cfg
+
+# - name: --- Setup myid ----
+#   template: src=zookeeper-myid.j2 dest=/var/lib/zookeeper/myid
+
+# - name: --- Config Logrotate for zookeeper ---
+#   template: src=kafka-logrotat-conf.j2 dest=/etc/logrotate.d/zookeeper
+  
+
+      

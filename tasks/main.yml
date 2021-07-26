@@ -1,0 +1,18 @@
+---
+# tasks file for roles/general-config
+
+- block:
+  - include_tasks: install-java.yml
+    when: "{{general_config.install_java}}"
+  - include_tasks: install-zookeeper.yml
+    when: "{{general_config.install_zookeeper}}"
+  - include_tasks: install-kafka.yml
+    when: "{{general_config.install_kafka}}"
+  become: yes
+
+
+
+
+
+
+

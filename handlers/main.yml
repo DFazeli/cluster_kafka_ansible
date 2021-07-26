@@ -1,0 +1,12 @@
+---
+# handlers file for roles/general-config
+
+- name: Restart kafka
+  service:
+    name: kafka
+    state: restarted
+
+- name: Restart zookeeper
+  service:
+    name: zookeeper
+    state: restarted 

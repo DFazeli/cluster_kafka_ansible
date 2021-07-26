@@ -1,0 +1,30 @@
+---
+
+- name: --- Download JDK {{general_config.java_version.name}}_{{general_config.java_version.version}}.{{general_config.java_version.extension}}----
+  get_url:
+     url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{general_config.java_version.name}}_{{general_config.java_version.version}}.{{general_config.java_version.extension}}"
+     dest: /opt/
+
+- name: --- extract archive java ---
+  unarchive:
+    src: "/opt/{{general_config.java_version.name}}_{{general_config.java_version.version}}.{{general_config.java_version.extension}}"
+    dest: /usr/local/bin/
+    remote_src: yes
+
+
+- name: update alternatives for java
+  alternatives:
+    name: java
+    path: "/usr/local/bin/{{general_config.java_version.name}}/bin/java"
+    link: /usr/bin/java
+    priority: 20000
+
+    #- name: --- Execute task with extended PATH ---
+    #  environment:
+    #       PATH: "/usr/local/bin/{{general_config.java_version.name}}/bin:{{ ansible_env.PATH }}"
+
+- name: set java home as environment variable
+  blockinfile:
+      insertafter: EOF
+      path: /etc/environment
+      block: export JAVA_HOME="/usr/local/bin/{{general_config.java_version.name}}"

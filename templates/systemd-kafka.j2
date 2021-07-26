@@ -1,0 +1,21 @@
+[Unit]
+Description=Apache Kafka server (broker)
+Documentation=http://kafka.apache.org/documentation.html
+Requires=network.target remote-fs.target 
+After=network.target remote-fs.target zookeeper.service
+
+[Service]
+Type=simple
+User=kafka
+Group=kafka
+LimitNOFILE=128000
+Restart=on-failure
+Environment="KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.password.file=/opt/kafka/jmxremote.password -Dcom.sun.management.jmxremote.access.file=/opt/kafka/jmxremote.access -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname={{ansible_hostname}}"
+Environment="JMX_PORT={{ kafka_config.jmx_port }}"
+Environment="LOG_DIR={{ kafka_config.kafka_log }}"
+
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+
+[Install]
+WantedBy=multi-user.target

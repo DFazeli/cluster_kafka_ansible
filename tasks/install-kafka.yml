@@ -1,0 +1,165 @@
+---
+- name: -- Remove swapfile from /etc/fstab --
+  mount:
+    name: swap
+    fstype: swap
+    state: absent
+
+- name: --- Ensure lvm and mkfs.xfs package installed ----
+  ansible.builtin.package:
+      name: "{{ item }}"
+      state: present
+  with_items:
+      - lvm2
+      - xfsprogs    
+
+- name: --- Create data disk [VG]---
+  lvg: 
+    vg: "{{ general_config.create_data_kafka_disk.vg_name }}"
+    pvs: "{{ general_config.create_data_kafka_disk.device }}"
+    state: present
+  when: "{{ general_config.create_data_kafka_disk.present }}"
+
+- name: --- Create data disk [LV] ---
+  lvol: 
+    vg: "{{ general_config.create_data_kafka_disk.vg_name }}"
+    lv: "{{ general_config.create_data_kafka_disk.lv_name }}"
+    size: "{{ general_config.create_data_kafka_disk.lv_size }}"
+  when: "{{ general_config.create_data_kafka_disk.present }}"
+
+- name: --- Format kafka data ---- 
+  filesystem: 
+    fstype: "{{ general_config.create_data_kafka_disk.filesystem }}" 
+    dev: /dev/{{ general_config.create_data_kafka_disk.vg_name }}/{{ general_config.create_data_kafka_disk.lv_name }}
+  when: "{{ general_config.create_data_kafka_disk.present }}"
+
+- name: ---- Mount kafka data disk ---
+  mount: 
+    name: "{{ general_config.create_data_kafka_disk.mount_point }}"
+    src: "/dev/{{ general_config.create_data_kafka_disk.vg_name }}/{{ general_config.create_data_kafka_disk.lv_name }}"
+    fstype: "{{ general_config.create_data_kafka_disk.filesystem }}"
+    state: mounted
+  when: "{{ general_config.create_data_kafka_disk.present }}"
+
+- name: --- Download kafka packages ---
+  get_url:
+    url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}.{{general_config.kafka_version.extension}}"
+    dest: /opt/
+
+
+- name: --- extract archive kafka ---
+  unarchive:
+    src: "/opt/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}.{{general_config.kafka_version.extension}}"
+    dest: "/opt/"
+    remote_src: yes 
+
+- name: Create group kafka
+  group:
+    name: kafka
+    state: present
+
+- name: --- Add user kafka ---
+  user:
+     name: kafka
+     comment: "Kafka user"
+     shell: /sbin/nologin
+     system: yes
+     group: kafka
+     createhome: no
+
+- name: Change owner kafka directory
+  file:
+    path: "/opt/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}"
+    owner: kafka
+    group: kafka
+    recurse: yes
+ 
+ 
+- name: Create symbolic link 
+  file:
+    src: "/opt/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}"
+    dest: "/opt/kafka"
+    state: link
+
+- name: Create kafka data directory
+  file:
+    path: /kafka/{{ item }}
+    state: directory
+    owner: kafka
+    group: kafka
+    recurse: yes
+  with_items:
+      - data
+
+- name: Change owner kafka link
+  file:
+    path: /opt/kafka
+    owner: kafka
+    group: kafka
+ 
+- name: craete kafka logs directory
+  file:
+   path: /var/log/kafka
+   state: directory
+   owner: kafka
+   group: kafka
+   recurse: yes
+ 
+- name: --- Set JMX Authentication Files ---
+  template: src={{item.src}} dest={{item.dest}}
+  with_items:
+      - { src: 'templates/jmxremote.access.j2', dest: '/opt/kafka/jmxremote.access' }
+      - { src: 'templates/jmxremote.password.j2', dest: '/opt/kafka/jmxremote.password' }
+ 
+
+- name: --- set server propertis ---
+  template: 
+    src: kafka.server.properties.j2 
+    dest: /opt/kafka/config/server.properties
+
+- name: --- Create systemd for kafka ---
+  template: 
+    src: systemd-kafka.j2 
+    dest: /etc/systemd/system/kafka.service
+
+- name: --- Config Logrotate for Kafka ---
+  template: 
+    src: kafka-logrotat-conf.j2 
+    dest: /etc/logrotate.d/kafka
+
+- name: --- set kafka-server-start.sh with new Xmx and Xms value ----
+  template: 
+    src: "{{item.src}}"
+    dest: "{{item.dest}}"
+  with_items:
+     - { src: 'templates/kafka-server-start.sh.j2', dest: '/opt/kafka/bin/kafka-server-start.sh' }
+
+
+- name: Change kafka file to kafka user 
+  file:
+   path: /opt/kafka
+   state: directory
+   owner: kafka
+   group: kafka
+   recurse: yes
+
+- name: --- Change mode jmxremote pass file ---
+  file:
+    path: /opt/kafka/jmxremote.password
+    owner: kafka
+    group: kafka
+    mode: 0600
+
+- name: --- daemon_reload ---- 
+  systemd:
+    name: kafka
+    daemon_reload: yes
+    enabled: yes
+
+- name: --- Restart Kafka ---
+  service:
+    name: kafka
+    state: restarted
+
+
+
