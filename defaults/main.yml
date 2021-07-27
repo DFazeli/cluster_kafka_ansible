@@ -1,18 +1,9 @@
 ---
 
 general_config:
-  java_version:
-    name: jdk-11.0.12
-    version: linux-x64_bin
-    extension: tar.gz
-  zookeeper_version: 
-    name: apache-zookeeper
-    version: 3.5.9-bin
-    extension: tar.gz
-  kafka_version: 
-    name: kafka_2
-    version: 13-2.8.0
-    extension: tgz
+  java_version: jdk-11.0.12_linux-x64_bin.tar.gz
+  zookeeper_version: apache-zookeeper-3.5.9-bin.tar.gz
+  kafka_version: kafka_2.13-2.8.0.tgz
   install_java: true
   install_zookeeper: true
   install_kafka: true
@@ -45,6 +36,13 @@ kafka_config:
         Xmx: 2
         Xms: 2
         jmx_port: 9999
+
+
+zookeeper_config:
+  zookeeper_admin_enableServer: false
+  client_port: 2181
+  dataDir: /var/lib/zookeeper
+   
 
 
 

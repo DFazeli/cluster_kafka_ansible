@@ -6,17 +6,19 @@
     fstype: swap
     state: absent
 
-- name: Download Zookeeper packages      
+- name: --- Download Zookeeper packages '{{ general_config.zookeeper_version }}' ---
   get_url:
-    url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}"
+    url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{ general_config.zookeeper_version }}"
     dest: /opt/
 
 
-- name: --- extract archive zookeeper ---
+- name: --- extract archive zookeeper '{{ general_config.zookeeper_version }}' ---
   unarchive:
-    src: "/opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}"
+    src: "/opt/{{ general_config.zookeeper_version }}"
     dest: "/opt/"
-    remote_src: yes 
+    remote_src: yes
+    list_files: yes
+  register: archive_zookeeper_contents
 
 - name: Create group zookeeper
   group:
@@ -33,9 +35,9 @@
     createhome: no
 
 
-- name: Change zookeeper directory
+- name: Change owner zookeeper directory
   file:
-    path: "/opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}"
+    path: "/opt/{{ archive_zookeeper_contents.files[0].split('/')[0] }}"
     owner: zookeeper
     group: zookeeper
     recurse: yes
@@ -43,11 +45,11 @@
  
 - name: Create symbolic link [zookeeper] 
   file:
-    src: "/opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}"
+    src: "/opt/{{ archive_zookeeper_contents.files[0].split('/')[0] }}"
     dest: "/opt/zookeeper"
     state: link
 
-- name: Change zookeeper link
+- name: Change owner zookeeper link
   file:
     path: /opt/zookeeper
     owner: zookeeper
@@ -138,52 +140,3 @@
     name: zookeeper
     state: restarted
   
-
-
-
-  
-
-
-
-
-#************************************************************************************
-# - name: --- preinstallation zookeeper ---
-#   shell: |
-#    cd /opt
-#    tar xzf {{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}.{{general_config.zookeeper_version.extension}}
-#    useradd zookeeper
-#    chown -R zookeeper /opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}}
-#    ln -s /opt/{{general_config.zookeeper_version.name}}-{{general_config.zookeeper_version.version}} /opt/zookeeper
-#    chown -h zookeeper:zookeeper /opt/zookeeper
-#    mkdir /var/lib/zookeeper
-#    chown zookeeper:zookeeper /var/lib/zookeeper
-#    mkdir /var/log/zookeeper
-#    chown zookeeper:zookeeper /var/log/zookeeper
-#    cd /opt/zookeeper/conf
-   
-
-# - name: --- set zkEnv.sh ---   
-#   template: src=zkenv.sh.j2 dest=/opt/zookeeper/bin/zkEnv.sh
-   
-# - name: --- create Systemd for zookeeper ----
-#   template: src=Systemd-zookeeper.j2 dest=/etc/systemd/system/zookeeper.service
-
-# - name: --- config Crontab ----
-#   cron:
-#      name: "run zkcli"
-#      minute: "0"
-#      hour: "00"
-#      job: "/opt/zookeeper/bin/zkCli.sh /var/lib/zookeeper -n 3"
-#   ignore_errors: true
-
-# - name: --- Setup zoo.cfg ----
-#   template: src=zookeeper-zoo.j2 dest=/opt/zookeeper/conf/zoo.cfg
-
-# - name: --- Setup myid ----
-#   template: src=zookeeper-myid.j2 dest=/var/lib/zookeeper/myid
-
-# - name: --- Config Logrotate for zookeeper ---
-#   template: src=kafka-logrotat-conf.j2 dest=/etc/logrotate.d/zookeeper
-  
-
-      

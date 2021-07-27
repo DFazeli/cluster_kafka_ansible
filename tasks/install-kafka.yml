@@ -41,17 +41,19 @@
     state: mounted
   when: "{{ general_config.create_data_kafka_disk.present }}"
 
-- name: --- Download kafka packages ---
+- name: --- Download kafka packages '{{general_config.kafka_version}}' ---
   get_url:
     url: "{{ repo_info.protocol }}{{repo_info.url}}:{{ repo_info.port }}/artifactory/kafka-pakages/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}.{{general_config.kafka_version.extension}}"
     dest: /opt/
 
 
-- name: --- extract archive kafka ---
+- name: --- extract archive kafka '{{general_config.kafka_version}}' ---
   unarchive:
-    src: "/opt/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}.{{general_config.kafka_version.extension}}"
+    src: "/opt/{{general_config.kafka_version}}"
     dest: "/opt/"
-    remote_src: yes 
+    remote_src: yes
+    list_files: yes
+  register: archive_kafka_contents
 
 - name: Create group kafka
   group:
@@ -69,7 +71,7 @@
 
 - name: Change owner kafka directory
   file:
-    path: "/opt/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}"
+    path: "/opt/{{ archive_kafka_contents.files[0].split('/')[0] }}"
     owner: kafka
     group: kafka
     recurse: yes
@@ -77,7 +79,7 @@
  
 - name: Create symbolic link 
   file:
-    src: "/opt/{{general_config.kafka_version.name}}.{{general_config.kafka_version.version}}"
+    src: "/opt/{{ archive_kafka_contents.files[0].split('/')[0] }}"
     dest: "/opt/kafka"
     state: link
 

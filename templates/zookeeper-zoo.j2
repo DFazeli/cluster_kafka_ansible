@@ -23,12 +23,12 @@ initLimit=10
 # sending a request and getting an acknowledgement
 syncLimit=5
 # the directory where the snapshot is stored.
-dataDir=/var/lib/zookeeper
+dataDir= {{ zookeeper_config.dataDir }}
 # the port at which the clients will connect
 
-clientPort=2181
+clientPort={{ zookeeper_config.client_port }}
 4lw.commands.whitelist=*
-
+admin.enableServer= {{zookeeper_config.zookeeper_admin_enableServer}}
 
 server.{{zookeeper_nodes.node1.myid}}={{zookeeper_nodes.node1.internal_ip}}:2888:3888
 server.{{zookeeper_nodes.node2.myid}}={{zookeeper_nodes.node2.internal_ip}}:2888:3888
